@@ -1,9 +1,20 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useCart } from "../hooks/useCart";
 import { OrderService } from "../services/OrderService";
 import { FormField } from "../components/molecules/FormField";
 import { Button } from "../components/atoms/Button";
+
+const checkoutSchema = z.object({
+  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
+  email: z.string().email("Debe ser un correo electrónico válido"),
+  document: z.string().min(8, "El documento debe tener al menos 8 caracteres"),
+  phone: z.string().min(9, "El teléfono debe tener al menos 9 dígitos"),
+});
+
+type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export const CheckoutPage = () => {
   const {
@@ -15,37 +26,28 @@ export const CheckoutPage = () => {
     removeFromCart,
   } = useCart();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const [customer, setCustomer] = useState({
-    name: "",
-    email: "",
-    document: "",
-    phone: "",
+  const {
+    register,
+    handleSubmit,
+    setError, 
+    formState: { errors, isSubmitting },
+  } = useForm<CheckoutFormData>({
+    resolver: zodResolver(checkoutSchema),
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomer({ ...customer, [e.target.id]: e.target.value });
-  };
-
-  const handleCheckout = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const onSubmit = async (data: CheckoutFormData) => {
     if (cart.length === 0) {
-      setError("Tu carrito está vacío.");
+      setError("root", { message: "Tu carrito está vacío." });
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     try {
       const payload = {
-        customer_name: customer.name,
-        customer_email: customer.email,
-        customer_document: customer.document,
-        customer_phone: customer.phone,
+        customer_name: data.name,
+        customer_email: data.email,
+        customer_document: data.document,
+        customer_phone: data.phone,
         items: cart.map((item) => ({
           product_id: item.id,
           quantity: item.cartQuantity,
@@ -57,9 +59,9 @@ export const CheckoutPage = () => {
       alert("¡Pedido realizado con éxito!");
       navigate("/");
     } catch (err) {
-      setError("Hubo un problema al procesar el pedido. Verifica el stock.");
-    } finally {
-      setLoading(false);
+      setError("root", {
+        message: "Hubo un problema al procesar el pedido. Verifica el stock.",
+      });
     }
   };
 
@@ -81,49 +83,69 @@ export const CheckoutPage = () => {
       <div className="row">
         <div className="col-md-7">
           <form
-            onSubmit={handleCheckout}
+            onSubmit={handleSubmit(onSubmit)}
             className="card p-4 shadow-sm border-0 mb-4"
           >
             <h5 className="mb-3">Datos de Facturación</h5>
-            {error && <div className="alert alert-danger">{error}</div>}
+            
+            {errors.root && (
+              <div className="alert alert-danger">{errors.root.message}</div>
+            )}
 
-            <FormField
-              id="name"
-              label="Nombre Completo"
-              type="text"
-              required
-              value={customer.name}
-              onChange={handleChange}
-            />
-            <FormField
-              id="email"
-              label="Correo Electrónico"
-              type="email"
-              required
-              value={customer.email}
-              onChange={handleChange}
-            />
-            <FormField
-              id="document"
-              label="Documento de Identidad (DNI/RUC)"
-              type="text"
-              value={customer.document}
-              onChange={handleChange}
-            />
-            <FormField
-              id="phone"
-              label="Teléfono"
-              type="text"
-              value={customer.phone}
-              onChange={handleChange}
-            />
+            <div className="mb-3">
+              <FormField
+                id="name"
+                label="Nombre Completo"
+                type="text"
+                {...register("name")}
+              />
+              {errors.name && (
+                <span className="text-danger small">{errors.name.message}</span>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <FormField
+                id="email"
+                label="Correo Electrónico"
+                type="email"
+                {...register("email")}
+              />
+              {errors.email && (
+                <span className="text-danger small">{errors.email.message}</span>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <FormField
+                id="document"
+                label="Documento de Identidad (DNI/RUC)"
+                type="text"
+                {...register("document")}
+              />
+              {errors.document && (
+                <span className="text-danger small">{errors.document.message}</span>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <FormField
+                id="phone"
+                label="Teléfono"
+                type="text"
+                {...register("phone")}
+              />
+              {errors.phone && (
+                <span className="text-danger small">{errors.phone.message}</span>
+              )}
+            </div>
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={isSubmitting}
               className="mt-3 btn btn-success w-100"
             >
-              {loading ? "Procesando..." : "Confirmar Pedido"}
+              {isSubmitting ? "Procesando..." : "Confirmar Pedido"}
             </Button>
           </form>
         </div>
