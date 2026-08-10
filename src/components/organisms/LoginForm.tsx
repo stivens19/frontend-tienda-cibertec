@@ -43,6 +43,7 @@ export const LoginForm = () => {
         <FormField
           id="email"
           label="Correo Electrónico"
+          value={"admin@admin.com"}
           {...register("email")}
         />
         {errors.email && (
@@ -55,6 +56,7 @@ export const LoginForm = () => {
           id="password"
           label="Contraseña"
           type="password"
+          value={"password"}
           {...register("password")}
         />
         {errors.password && (
