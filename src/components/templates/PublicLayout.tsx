@@ -10,7 +10,7 @@ export const PublicLayout = () => {
         <div className="d-flex flex-column min-vh-100">
             <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
                 <div className="container">
-                    <Link className="navbar-brand fw-bold" to="/">Mi Catálogo</Link>
+                    <Link className="navbar-brand fw-bold" to="/">Tienda Virtual</Link>
                     
                     <div className="ms-auto d-flex gap-3 align-items-center">
     
