@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import Swal from "sweetalert2"; // 1. Importamos SweetAlert2
 import { useCart } from "../hooks/useCart";
 import { OrderService } from "../services/OrderService";
 import { FormField } from "../components/molecules/FormField";
@@ -30,7 +31,7 @@ export const CheckoutPage = () => {
   const {
     register,
     handleSubmit,
-    setError, 
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -38,7 +39,13 @@ export const CheckoutPage = () => {
 
   const onSubmit = async (data: CheckoutFormData) => {
     if (cart.length === 0) {
-      setError("root", { message: "Tu carrito está vacío." });
+      Swal.fire({
+        title: "Carrito vacío",
+        text: "Agrega productos a tu carrito antes de finalizar la compra.",
+        icon: "warning",
+        confirmButtonColor: "#0d6efd",
+        confirmButtonText: "Entendido",
+      });
       return;
     }
 
@@ -56,9 +63,25 @@ export const CheckoutPage = () => {
 
       await OrderService.checkout(payload);
       clearCart();
-      alert("¡Pedido realizado con éxito!");
+      
+      await Swal.fire({
+        title: "¡Pedido Exitoso!",
+        text: "Tu compra se ha procesado correctamente.",
+        icon: "success",
+        confirmButtonColor: "#198754", 
+        confirmButtonText: "Ir al catálogo",
+      });
+      
       navigate("/");
     } catch (err) {
+      Swal.fire({
+        title: "Error al procesar",
+        text: "Hubo un problema al procesar el pedido. Verifica el stock.",
+        icon: "error",
+        confirmButtonColor: "#dc3545",
+        confirmButtonText: "Cerrar",
+      });
+      
       setError("root", {
         message: "Hubo un problema al procesar el pedido. Verifica el stock.",
       });
